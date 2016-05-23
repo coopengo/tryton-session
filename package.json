@@ -1,0 +1,35 @@
+{
+  "name": "tryton-session",
+  "description": "Tryton Session",
+  "version": "4.0.0",
+  "license": "GPL-3.0+",
+  "author": "Coopengo <dev@coopengo.com>",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/coopengo/tryton-session.git"
+  },
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "mocha tests/*"
+  },
+  "dependencies": {
+    "atob": "^2.0.3",
+    "btoa": "^1.1.2",
+    "superagent": "^2.0.0-alpha.3",
+    "tryton-base": "~4.0.0",
+    "underscore": "^1.8.3"
+  },
+  "devDependencies": {
+    "del": "^2.2.0",
+    "gulp": "^3.9.1",
+    "gulp-changed": "^1.3.0",
+    "gulp-jsbeautifier": "^2.0.3",
+    "gulp-jshint": "^2.0.1",
+    "gulp-mocha": "^2.2.0",
+    "gulp-util": "^3.0.7",
+    "jshint": "^2.9.2",
+    "jshint-stylish": "^2.2.0",
+    "require-dir": "^0.3.0",
+    "should": "^8.3.2"
+  }
+}
