@@ -15,6 +15,7 @@
   "dependencies": {
     "atob": "^2.0.3",
     "btoa": "^1.1.2",
+    "debug": "^2.2.0",
     "superagent": "^2.0.0-alpha.3",
     "tryton-base": "~4.0.0",
     "underscore": "^1.8.3"
