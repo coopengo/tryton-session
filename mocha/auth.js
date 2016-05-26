@@ -3,12 +3,12 @@ require('should');
 var Session = require('..');
 var data = require('./.data');
 //
-describe('Authenticated actions', function () {
+describe('Authenticated actions', () => {
   var session = new Session(data.server, data.database);
-  before('Starts session', function () {
+  before('Starts session', () => {
     return session.start(data.username, data.password);
   });
-  it('Lists modules', function () {
+  it('Lists modules', () => {
     var promise = session.rpc('model.ir.module.search_read', [
         [], 0, null, null, ['name']
       ])
@@ -37,7 +37,7 @@ describe('Authenticated actions', function () {
     promise.should.be.Promise();
     return promise;
   });
-  after('Stops session', function () {
+  after('Stops session', () => {
     return session.stop();
   });
 });

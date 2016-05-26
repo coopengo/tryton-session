@@ -2,9 +2,9 @@ require('should');
 var Session = require('..');
 var data = require('./.data');
 //
-describe('Non authenticated actions', function () {
+describe('Non authenticated actions', () => {
   var session = new Session(data.server);
-  it('gets server version', function () {
+  it('gets server version', () => {
     var promise = session.version()
       .then((result) => {
         result.should.be.String()
@@ -13,7 +13,7 @@ describe('Non authenticated actions', function () {
     promise.should.be.Promise();
     return promise;
   });
-  it('gets languages', function () {
+  it('gets languages', () => {
     var promise = session.listLang()
       .then((result) => {
         result.should.be.Array();
@@ -26,7 +26,7 @@ describe('Non authenticated actions', function () {
     promise.should.be.Promise();
     return promise;
   });
-  it('gets databases', function () {
+  it('gets databases', () => {
     var promise = session.listDB()
       .then((result) => {
         result.should.be.Array();
