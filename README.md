@@ -41,4 +41,4 @@ This makes it easy to:
     - debug rpc exchanges (browser tools are good for that tasks)
     - understand and play with trytond
 
-![Browser][browser.png]
+![Browser](browser.png)
