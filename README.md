@@ -5,7 +5,7 @@ THIS PROJECT IS STILL A WORK IN PROGRESS !
 [tryton](http://www.tryton.org/) is a very extensible ERP written in Python.
 
 tryton-session is a **part** of a bigger package (tryton-api) that is:
-- aimed to be a simple library to interact with a tryton server (trytond) from javascipt (node or browser)
+- aimed to be a simple library to interact with a tryton server (trytond) from javascript (node or browser)
 - could be considered as a [proteus](https://github.com/tryton/proteus) like library for javascript
 
 ### History
