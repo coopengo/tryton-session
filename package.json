@@ -17,7 +17,7 @@
   },
   "browserify-shim": {
     "underscore": "global:_",
-    "underscore": "global:moment"
+    "moment": "global:moment"
   },
   "scripts": {
     "beautify": "js-beautify --config .jsbeautifyrc -r lib/*.js tests/*.js tests/.*.js",

@@ -121,7 +121,7 @@ module.exports = function (_, moment) {
 
 },{}],2:[function(require,module,exports){
 (function (global){
-var _ = (typeof window !== "undefined" ? window['moment'] : typeof global !== "undefined" ? global['moment'] : null);
+var _ = (typeof window !== "undefined" ? window['_'] : typeof global !== "undefined" ? global['_'] : null);
 var atob = require('atob');
 var btoa = require('btoa');
 
@@ -288,19 +288,21 @@ module.exports = {
 
 },{}],4:[function(require,module,exports){
 (function (global){
-var _ = (typeof window !== "undefined" ? window['moment'] : typeof global !== "undefined" ? global['moment'] : null);
+var _ = (typeof window !== "undefined" ? window['_'] : typeof global !== "undefined" ? global['_'] : null);
 var btoa = require('btoa');
 var request = require('superagent');
 var json = require('./json');
 var debug = require('debug')('api:session:rpc');
 //
 function rpc(session, method, params, options) {
+  options = options || {};
   var uri = session.server + '/';
-  uri = session.database ? uri + session.database + '/' : uri;
+  if (!options.nodb) {
+    uri = uri + session.database + '/';
+  }
   var req = request.post(uri)
     .type('json')
     .accept('json');
-  options = options || {};
   if (!options.anonymous) {
     _.assert(session.username && session.user && session.token, 'not connected');
     req.set('Authorization', 'Session ' + btoa(session.username + ':' + session
@@ -378,7 +380,7 @@ rpc.bulk = bulk;
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./json":2,"btoa":9,"debug":12,"superagent":18}],5:[function(require,module,exports){
 (function (global){
-var _ = (typeof window !== "undefined" ? window['moment'] : typeof global !== "undefined" ? global['moment'] : null);
+var _ = (typeof window !== "undefined" ? window['_'] : typeof global !== "undefined" ? global['_'] : null);
 var EventEmitter = require('events');
 var rpc = require('./rpc');
 var methods = require('./methods');
@@ -452,18 +454,21 @@ Session.prototype.bulk = function (method, params, context) {
 // basic server actions (do not change session)
 Session.prototype.version = function () {
   return rpc(this, methods.version, [], {
+    nodb: true,
     anonymous: true,
     context: null
   });
 };
 Session.prototype.listLang = function () {
   return rpc(this, methods.listLang, [], {
+    nodb: true,
     anonymous: true,
     context: null
   });
 };
 Session.prototype.listDB = function () {
   return rpc(this, methods.listDB, [], {
+    nodb: true,
     anonymous: true,
     context: null
   });
@@ -4870,8 +4875,9 @@ module.exports = request;
 
 },{}],22:[function(require,module,exports){
 (function (global){
-var _ = (typeof window !== "undefined" ? window['moment'] : typeof global !== "undefined" ? global['moment'] : null);
-require('tryton-base')(_);
+var _ = (typeof window !== "undefined" ? window['_'] : typeof global !== "undefined" ? global['_'] : null);
+var moment = (typeof window !== "undefined" ? window['moment'] : typeof global !== "undefined" ? global['moment'] : null);
+require('tryton-base')(_, moment);
 var Session = require('./session');
 require('./triggers');
 module.exports = Session;

@@ -3,7 +3,7 @@ var Session = require('..');
 var data = require('./.data');
 //
 describe('Non authenticated actions', () => {
-  var session = new Session(data.server);
+  var session = new Session(data.server, data.database);
   it('gets server version', () => {
     var promise = session.version()
       .then((result) => {

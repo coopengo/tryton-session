@@ -31,3 +31,14 @@ tryton-session exposes a session class that:
 - connects to server and keeps the token
 - ensures all server calls
 - supports pack and unpack for serialization (with triggers)
+
+### Usage case
+
+This library can be used in a "standalone" mode to query a trytond server.
+For that you need to launch this [page](dist/index.html).
+
+This makes it easy to:
+    - debug rpc exchanges (browser tools are good for that tasks)
+    - understand and play with trytond
+
+![Browser][browser.png]

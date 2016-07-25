@@ -2,7 +2,7 @@
 <html>
 
 <head>
-  <title>Coopengo</title>
+  <title>Tryton Session</title>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore.js"></script>
@@ -10,8 +10,18 @@
   <script type="text/javascript" src="tryton-session.js"></script>
 </head>
 
-<body>
-  <p>This is a demo page. Go to debug tools and enjoy scripting.</p>
+<body style="font-family: Sans-serif;">
+  <p>This is a demo page. Launch debug tools and enjoy scripting !</p>
+  <h4>Possibilities overview</h4>
+  <p><pre>
+    var session = new Session('http://localhost:7999');
+    session.listDB().then(console.log);
+    session.database = 'tryton';
+    session.start('admin', 'admin').then(console.log);
+    session.rpc('model.res.user.search', [{}]).then(console.log);
+    session.rpc('model.res.user.read', [[1]]).then(console.log);
+  </pre></p>
+  <p><em>Usually, due to security policy, the browser refuses the server response (Cross-origin resource sharing). This can be bypassed by a browser extension or commandline options.</em></p>
 </body>
 
 </html>
