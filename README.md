@@ -32,7 +32,7 @@ tryton-session exposes a session class that:
 - ensures all server calls
 - supports pack and unpack for serialization (with triggers)
 
-### Usage case
+### Use case
 
 This library can be used in a "standalone" mode to query a trytond server.
 For that you need to launch this [page](dist/index.html).
