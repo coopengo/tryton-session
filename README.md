@@ -38,7 +38,7 @@ This library can be used in a "standalone" mode to query a trytond server.
 For that you need to launch this [page](dist/index.html).
 
 This makes it easy to:
-    - debug rpc exchanges (browser tools are good for that tasks)
-    - understand and play with trytond
+- debug rpc exchanges (browser tools are good for that)
+- understand and play with trytond
 
 ![Browser](browser.png)

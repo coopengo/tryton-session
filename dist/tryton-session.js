@@ -488,7 +488,7 @@ Session.prototype.login = function (username, password) {
         this.token = result[1];
       }
       else {
-        Promise.reject('login failed');
+        return Promise.reject('login failed');
       }
     });
 };
