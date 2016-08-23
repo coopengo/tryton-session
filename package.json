@@ -9,21 +9,11 @@
     "url": "git://github.com/coopengo/tryton-session.git"
   },
   "main": "lib/index.js",
-  "browser": "lib/index.js",
-  "browserify": {
-    "transform": [
-      "browserify-shim"
-    ]
-  },
-  "browserify-shim": {
-    "underscore": "global:_",
-    "moment": "global:moment"
-  },
   "scripts": {
-    "beautify": "js-beautify --config .jsbeautifyrc -r lib/*.js tests/*.js tests/.*.js",
-    "lint": "jshint -c .jshintrc lib/*.js && jshint -c tests/.jshintrc tests/*.js tests/.*.js",
+    "beautify": "js-beautify --config .jsbeautifyrc -r *.js lib/*.js tests/*.js tests/.*.js",
+    "lint": "jshint -c .jshintrc *.js lib/*.js && jshint -c tests/.jshintrc tests/*.js tests/.*.js",
     "test": "mocha tests/*",
-    "build": "browserify --standalone Session -o dist/tryton-session.js ."
+    "build": "webpack"
   },
   "dependencies": {
     "atob": "^2.0.3",
@@ -36,8 +26,7 @@
     "underscore": "^1.8.3"
   },
   "devDependencies": {
-    "browserify": "^13.0.1",
-    "browserify-shim": "^3.8.12",
-    "should": "^10.0.0"
+    "should": "^10.0.0",
+    "webpack": "^1.13.2"
   }
 }

@@ -8,7 +8,10 @@ describe('Authenticated actions', () => {
   before('Starts session', () => {
     return session.start(data.username, data.password);
   });
-  it('Lists modules', () => {
+  it('checks session', () => {
+    return session.check();
+  });
+  it('lists modules', () => {
     var promise = session.rpc('model.ir.module.search_read', [
         [], 0, null, null, ['name']
       ])
