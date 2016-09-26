@@ -3,7 +3,7 @@
   "description": "Tryton Session",
   "version": "4.0.0",
   "license": "GPL-3.0+",
-  "author": "Coopengo <dev@coopengo.com>",
+  "author": "Coopengo <support@coopengo.com>",
   "repository": {
     "type": "git",
     "url": "git://github.com/coopengo/tryton-session.git"
