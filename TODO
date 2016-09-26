@@ -1,0 +1,2 @@
+- use debug(a, b, c) rather than debug(a + b + c) to avoid extra computing on prod
+- when passed, context should override session context and not replace
