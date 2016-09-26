@@ -11,7 +11,7 @@
   "main": "lib/index.js",
   "scripts": {
     "beautify": "js-beautify --config .jsbeautifyrc -r *.js lib/*.js tests/*.js tests/.*.js",
-    "lint": "jshint -c .jshintrc *.js lib/*.js && jshint -c tests/.jshintrc tests/*.js tests/.*.js",
+    "lint": "jshint -c .jshintrc *.js lib/*.js; jshint -c tests/.jshintrc tests/*.js tests/.*.js",
     "test": "mocha tests/*",
     "build": "webpack"
   },
