@@ -1,7 +1,7 @@
 {
   "name": "tryton-session",
   "description": "Tryton Session",
-  "version": "4.0.2",
+  "version": "4.0.3",
   "license": "GPL-3.0+",
   "author": "Coopengo <support@coopengo.com>",
   "repository": {
@@ -11,24 +11,23 @@
   "main": "lib/index.js",
   "scripts": {
     "beautify": "js-beautify --config .jsbeautifyrc -r *.js lib/*.js tests/*.js tests/.*.js",
-    "lint": "jshint -c .jshintrc *.js lib/*.js; jshint -c tests/.jshintrc tests/*.js tests/.*.js",
-    "test": "mocha tests/*",
+    "lint": "jshint -c .jshintrc *.js lib/*.js tests/*.js tests/.*.js",
+    "test": "tap tests/*",
     "build": "webpack"
   },
   "dependencies": {
+    "assert": "^1.4.1",
     "atob": "^2.0.3",
     "btoa": "^1.1.2",
     "debug": "^2.2.0",
     "events": "^1.1.1",
-    "superagent": "^2.1.0"
-  },
-  "peerDependencies": {
-    "underscore": "^1.8.3",
-    "moment": "^2.14.1"
+    "inherits": "^2.0.3",
+    "lodash": "^4.16.2",
+    "superagent": "^2.1.0",
+    "tryton-types": "^4.0.0"
   },
   "devDependencies": {
-    "mocha": "^3.0.2",
-    "should": "^10.0.0",
+    "tap": "^7.1.2",
     "webpack": "^1.13.2"
   }
 }

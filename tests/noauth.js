@@ -1,40 +1,37 @@
-require('should');
+var t = require('tap');
+var _ = require('lodash');
 var Session = require('..');
 var data = require('./.data');
 //
-describe('Non authenticated actions', () => {
-  var session = new Session(data.server, data.database);
-  it('gets server version', () => {
-    var promise = session.version()
-      .then((result) => {
-        result.should.be.String()
-          .match(/^4\.0\.\d/);
+var session = new Session(data.server, data.database);
+
+function testVersion() {
+  return session.version()
+    .then((result) => {
+      t.match(result, /^4\.0\.\d/);
+    });
+}
+
+function testLangs() {
+  return session.listLang()
+    .then((result) => {
+      t.ok(_.isArray(result));
+      _.each(result, (l) => {
+        t.ok(_.isArray(l));
+        t.isa(l[0], 'string');
+        t.isa(l[1], 'string');
       });
-    promise.should.be.Promise();
-    return promise;
-  });
-  it('gets languages', () => {
-    var promise = session.listLang()
-      .then((result) => {
-        result.should.be.Array();
-        result.forEach((l) => {
-          l.should.be.Array();
-          l[0].should.be.String();
-          l[1].should.be.String();
-        });
+    });
+}
+
+function testDBs() {
+  return session.listDB()
+    .then((result) => {
+      t.ok(_.isArray(result));
+      _.each(result, (db) => {
+        t.isa(db, 'string');
       });
-    promise.should.be.Promise();
-    return promise;
-  });
-  it('gets databases', () => {
-    var promise = session.listDB()
-      .then((result) => {
-        result.should.be.Array();
-        result.forEach((db) => {
-          db.should.be.String();
-        });
-      });
-    promise.should.be.Promise();
-    return promise;
-  });
-});
+    });
+}
+var tests = [testVersion, testLangs, testDBs];
+Promise.all(_.map(tests, t.test));

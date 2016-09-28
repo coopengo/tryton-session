@@ -1,7 +1,7 @@
 module.exports = {
   entry: './lib/index.js',
   externals: {
-    'underscore': '_',
+    'lodash': '_',
     'moment': 'moment'
   },
   output: {
