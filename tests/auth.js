@@ -10,10 +10,6 @@ function start() {
   return session.start(data.username, data.password);
 }
 
-function stop() {
-  return session.stop();
-}
-
 function check() {
   return session.check();
 }
@@ -34,7 +30,7 @@ function unpack() {
     });
 }
 
-function listModules() {
+function modules() {
   return session.rpc('model.ir.module.search_read', [
       [], 0, null, null, ['name']
     ])
@@ -57,9 +53,13 @@ function listModules() {
       t.equal(_.size(res_module), 1);
     });
 }
+
+function stop() {
+  return session.stop();
+}
 t.test(start)
   .then(check)
   .then(pack)
   .then(unpack)
-  .then(listModules)
+  .then(modules)
   .then(stop);

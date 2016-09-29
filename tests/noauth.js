@@ -5,14 +5,14 @@ var data = require('./.data');
 //
 var session = new Session(data.server, data.database);
 
-function testVersion() {
+function version() {
   return session.version()
     .then((result) => {
       t.match(result, /^4\.0\.\d/);
     });
 }
 
-function testLangs() {
+function langs() {
   return session.listLang()
     .then((result) => {
       t.ok(_.isArray(result));
@@ -24,7 +24,7 @@ function testLangs() {
     });
 }
 
-function testDBs() {
+function dbs() {
   return session.listDB()
     .then((result) => {
       t.ok(_.isArray(result));
@@ -33,5 +33,5 @@ function testDBs() {
       });
     });
 }
-var tests = [testVersion, testLangs, testDBs];
+var tests = [version, langs, dbs];
 Promise.all(_.map(tests, t.test));
