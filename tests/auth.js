@@ -57,9 +57,9 @@ function listModules() {
       t.equal(_.size(res_module), 1);
     });
 }
-t.tearDown(stop);
 t.test(start)
-  .then(t.test(check))
-  .then(t.test(pack))
-  .then(t.test(unpack))
-  .then(t.test(listModules));
+  .then(check)
+  .then(pack)
+  .then(unpack)
+  .then(listModules)
+  .then(stop);
