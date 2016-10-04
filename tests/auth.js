@@ -1,5 +1,6 @@
 var t = require('tap');
 var _ = require('lodash');
+var co = require('co');
 var Session = require('..');
 var data = require('./.data');
 //
@@ -15,43 +16,39 @@ function check() {
 }
 
 function pack() {
-  return session.pack()
-    .then((c) => {
-      t.isa(c, 'string');
-      cache = c;
-    });
+  return co(function* () {
+    cache = yield session.pack();
+    t.isa(cache, 'string');
+  });
 }
 
 function unpack() {
-  return Session.unpack(cache)
-    .then((s) => {
-      t.ok(s instanceof Session);
-      session = s;
-    });
+  return co(function* () {
+    session = yield Session.unpack(cache);
+    t.ok(session instanceof Session);
+  });
 }
 
 function modules() {
-  return session.rpc('model.ir.module.search_read', [
+  return co(function* () {
+    var mods = yield session.rpc('model.ir.module.search_read', [
       [], 0, null, null, ['name']
-    ])
-    .then((result) => {
-      t.ok(_.isArray(result));
-      result.forEach((obj) => {
-        t.ok(_.isPlainObject(obj));
-        t.isa(obj.id, 'number');
-        t.isa(obj.name, 'string');
-      });
-      var ir_module = _.filter(result, (obj) => {
-        return obj.name === 'ir';
-      });
-      t.ok(_.isArray(ir_module));
-      t.equal(_.size(ir_module), 1);
-      var res_module = _.filter(result, (obj) => {
-        return obj.name === 'res';
-      });
-      t.ok(_.isArray(res_module));
-      t.equal(_.size(res_module), 1);
+    ]);
+    t.ok(_.isArray(mods));
+    _.each(mods, (obj) => {
+      t.ok(_.isPlainObject(obj));
+      t.isa(obj.id, 'number');
+      t.isa(obj.name, 'string');
     });
+    var mod = _.filter(mods, (obj) => {
+      return obj.name === 'ir';
+    });
+    t.equal(_.size(mod), 1);
+    mod = _.filter(mods, (obj) => {
+      return obj.name === 'res';
+    });
+    t.equal(_.size(mod), 1);
+  });
 }
 
 function stop() {
@@ -62,4 +59,5 @@ t.test(start)
   .then(pack)
   .then(unpack)
   .then(modules)
-  .then(stop);
+  .then(stop)
+  .catch(t.threw);

@@ -27,6 +27,7 @@
     "tryton-types": "^4.0.0"
   },
   "devDependencies": {
+    "co": "^4.6.0",
     "tap": "^7.1.2",
     "webpack": "^1.13.2"
   }
