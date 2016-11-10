@@ -51,6 +51,21 @@ function modules() {
   });
 }
 
+function crash() {
+  return co(function* () {
+    try {
+      yield session.rpc('model.tata.juliette', []);
+    }
+    catch (err) {
+      t.ok(_.isPlainObject(err));
+      t.isa(err.error, 'string');
+      t.isa(err.stack, 'string');
+      return;
+    }
+    t.fail('error not raised');
+  });
+}
+
 function stop() {
   return session.stop();
 }
@@ -59,5 +74,6 @@ t.test(start)
   .then(pack)
   .then(unpack)
   .then(modules)
+  .then(crash)
   .then(stop)
   .catch(t.threw);
