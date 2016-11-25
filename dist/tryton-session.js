@@ -46,7 +46,7 @@ var Session =
 /***/ function(module, exports, __webpack_require__) {
 
 	var Session = __webpack_require__(1);
-	__webpack_require__(28);
+	__webpack_require__(29);
 	module.exports = Session;
 
 
@@ -58,7 +58,7 @@ var Session =
 	var inherits = __webpack_require__(3);
 	var EventEmitter = __webpack_require__(4);
 	var rpc = __webpack_require__(5);
-	var methods = __webpack_require__(27);
+	var methods = __webpack_require__(28);
 
 	function appendActions(promise, actions) {
 	  _.each(actions, (act) => {
@@ -160,7 +160,6 @@ var Session =
 	//
 	// basic actions
 	Session.prototype.login = function (username, password) {
-	  this.reset();
 	  return rpc(this, methods.login, [username, password], null, {
 	      anonymous: true
 	    })
@@ -176,24 +175,25 @@ var Session =
 	    });
 	};
 	Session.prototype.logout = function () {
-	  return rpc(this, methods.logout, [], null)
-	    .then(() => this.reset());
+	  return this.rpc(methods.logout, [], null, true);
 	};
 	Session.prototype.check = function () {
-	  return rpc(this, methods.getPreferences, [true], {})
+	  return this.rpc(methods.getPreferences, [true], {}, true)
 	    .then(() => true, () => false);
 	};
 	//
 	// main api - start and stop (supports trigging actions)
-	Session.afterLogin = [];
-	Session.beforeLogout = [];
+	Session.afterStart = [];
+	Session.beforeStop = [];
 	Session.prototype.start = function (username, password) {
-	  return appendActions.call(this, this.login(username, password), Session.afterLogin)
+	  this.reset();
+	  return appendActions.call(this, this.login(username, password), Session.afterStart)
 	    .then(() => this.emit('start'));
 	};
 	Session.prototype.stop = function () {
-	  return appendActions.call(this, Promise.resolve(), Session.beforeLogout)
+	  return appendActions.call(this, Promise.resolve(), Session.beforeStop)
 	    .then(() => this.logout())
+	    .then(() => this.reset())
 	    .then(() => this.emit('stop'));
 	};
 	//
@@ -570,10 +570,10 @@ var Session =
 
 	var _ = __webpack_require__(2);
 	var assert = __webpack_require__(6);
-	var btoa = __webpack_require__(10);
-	var request = __webpack_require__(15);
-	var json = __webpack_require__(20);
-	var debug = __webpack_require__(24)('api:session:rpc');
+	var btoa = __webpack_require__(11);
+	var request = __webpack_require__(16);
+	var json = __webpack_require__(21);
+	var debug = __webpack_require__(25)('tryton:session:rpc');
 	//
 	function rpc(session, method, params, context, options) {
 	  options = options || {};
@@ -597,29 +597,37 @@ var Session =
 	    method: method,
 	    params: params
 	  });
-	  debug(method + ': => ' + JSON.stringify(params));
+	  debug(method + ': =>');
 	  req.send(body);
 	  return new Promise((resolve, reject) => {
-	    var t = new Date();
 	    req.end((err, res) => {
-	      debug(method + ': ' + (new Date() - t) + 'ms');
 	      if (err) {
-	        debug(method + ': ko <= node error');
+	        debug(method + ': <= ko - node error');
 	        reject(err);
 	      }
 	      else {
 	        var body;
 	        body = res.body;
 	        if (!body) {
-	          debug(method + ': ko <= no body');
+	          debug(method + ': <= ko - no body');
 	          reject('no body from server');
 	        }
 	        else if (body.error) {
-	          debug(method + ': ko <= ' + body.error[0]);
-	          reject(body.error);
+	          debug(method + ': <= ko - ' + body.error[0]);
+	          var e = {
+	            stack: body.error[1]
+	          };
+	          if (body.error[0].match(/\d\d\d:/)) {
+	            e.status = parseInt(body.error[0].substr(0, 3));
+	            e.error = body.error[0].substr(4);
+	          }
+	          else {
+	            e.error = body.error[0];
+	          }
+	          reject(e);
 	        }
 	        else {
-	          debug(method + ': ok <=');
+	          debug(method + ': <= ok');
 	          resolve(json.fromTryton(body.result));
 	        }
 	      }
@@ -1725,7 +1733,7 @@ var Session =
 	 *     prototype.
 	 * @param {function} superCtor Constructor function to inherit prototype from.
 	 */
-	exports.inherits = __webpack_require__(3);
+	exports.inherits = __webpack_require__(10);
 
 	exports._extend = function(origin, add) {
 	  // Don't do anything if add isn't an object
@@ -1760,25 +1768,40 @@ var Session =
 	var cachedSetTimeout;
 	var cachedClearTimeout;
 
+	function defaultSetTimout() {
+	    throw new Error('setTimeout has not been defined');
+	}
+	function defaultClearTimeout () {
+	    throw new Error('clearTimeout has not been defined');
+	}
 	(function () {
 	    try {
-	        cachedSetTimeout = setTimeout;
-	    } catch (e) {
-	        cachedSetTimeout = function () {
-	            throw new Error('setTimeout is not defined');
+	        if (typeof setTimeout === 'function') {
+	            cachedSetTimeout = setTimeout;
+	        } else {
+	            cachedSetTimeout = defaultSetTimout;
 	        }
+	    } catch (e) {
+	        cachedSetTimeout = defaultSetTimout;
 	    }
 	    try {
-	        cachedClearTimeout = clearTimeout;
-	    } catch (e) {
-	        cachedClearTimeout = function () {
-	            throw new Error('clearTimeout is not defined');
+	        if (typeof clearTimeout === 'function') {
+	            cachedClearTimeout = clearTimeout;
+	        } else {
+	            cachedClearTimeout = defaultClearTimeout;
 	        }
+	    } catch (e) {
+	        cachedClearTimeout = defaultClearTimeout;
 	    }
 	} ())
 	function runTimeout(fun) {
 	    if (cachedSetTimeout === setTimeout) {
 	        //normal enviroments in sane situations
+	        return setTimeout(fun, 0);
+	    }
+	    // if setTimeout wasn't available but was latter defined
+	    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+	        cachedSetTimeout = setTimeout;
 	        return setTimeout(fun, 0);
 	    }
 	    try {
@@ -1799,6 +1822,11 @@ var Session =
 	function runClearTimeout(marker) {
 	    if (cachedClearTimeout === clearTimeout) {
 	        //normal enviroments in sane situations
+	        return clearTimeout(marker);
+	    }
+	    // if clearTimeout wasn't available but was latter defined
+	    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+	        cachedClearTimeout = clearTimeout;
 	        return clearTimeout(marker);
 	    }
 	    try {
@@ -1924,6 +1952,35 @@ var Session =
 
 /***/ },
 /* 10 */
+/***/ function(module, exports) {
+
+	if (typeof Object.create === 'function') {
+	  // implementation from standard node.js 'util' module
+	  module.exports = function inherits(ctor, superCtor) {
+	    ctor.super_ = superCtor
+	    ctor.prototype = Object.create(superCtor.prototype, {
+	      constructor: {
+	        value: ctor,
+	        enumerable: false,
+	        writable: true,
+	        configurable: true
+	      }
+	    });
+	  };
+	} else {
+	  // old school shim for old browsers
+	  module.exports = function inherits(ctor, superCtor) {
+	    ctor.super_ = superCtor
+	    var TempCtor = function () {}
+	    TempCtor.prototype = superCtor.prototype
+	    ctor.prototype = new TempCtor()
+	    ctor.prototype.constructor = ctor
+	  }
+	}
+
+
+/***/ },
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(Buffer) {(function () {
@@ -1945,10 +2002,10 @@ var Session =
 	  module.exports = btoa;
 	}());
 
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(11).Buffer))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(12).Buffer))
 
 /***/ },
-/* 11 */
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(Buffer, global) {/*!
@@ -1961,9 +2018,9 @@ var Session =
 
 	'use strict'
 
-	var base64 = __webpack_require__(12)
-	var ieee754 = __webpack_require__(13)
-	var isArray = __webpack_require__(14)
+	var base64 = __webpack_require__(13)
+	var ieee754 = __webpack_require__(14)
+	var isArray = __webpack_require__(15)
 
 	exports.Buffer = Buffer
 	exports.SlowBuffer = SlowBuffer
@@ -3741,14 +3798,15 @@ var Session =
 	  return val !== val // eslint-disable-line no-self-compare
 	}
 
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(11).Buffer, (function() { return this; }())))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(12).Buffer, (function() { return this; }())))
 
 /***/ },
-/* 12 */
+/* 13 */
 /***/ function(module, exports) {
 
 	'use strict'
 
+	exports.byteLength = byteLength
 	exports.toByteArray = toByteArray
 	exports.fromByteArray = fromByteArray
 
@@ -3756,23 +3814,17 @@ var Session =
 	var revLookup = []
 	var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array
 
-	function init () {
-	  var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-	  for (var i = 0, len = code.length; i < len; ++i) {
-	    lookup[i] = code[i]
-	    revLookup[code.charCodeAt(i)] = i
-	  }
-
-	  revLookup['-'.charCodeAt(0)] = 62
-	  revLookup['_'.charCodeAt(0)] = 63
+	var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+	for (var i = 0, len = code.length; i < len; ++i) {
+	  lookup[i] = code[i]
+	  revLookup[code.charCodeAt(i)] = i
 	}
 
-	init()
+	revLookup['-'.charCodeAt(0)] = 62
+	revLookup['_'.charCodeAt(0)] = 63
 
-	function toByteArray (b64) {
-	  var i, j, l, tmp, placeHolders, arr
+	function placeHoldersCount (b64) {
 	  var len = b64.length
-
 	  if (len % 4 > 0) {
 	    throw new Error('Invalid string. Length must be a multiple of 4')
 	  }
@@ -3782,9 +3834,19 @@ var Session =
 	  // represent one byte
 	  // if there is only one, then the three characters before it represent 2 bytes
 	  // this is just a cheap hack to not do indexOf twice
-	  placeHolders = b64[len - 2] === '=' ? 2 : b64[len - 1] === '=' ? 1 : 0
+	  return b64[len - 2] === '=' ? 2 : b64[len - 1] === '=' ? 1 : 0
+	}
 
+	function byteLength (b64) {
 	  // base64 is 4/3 + up to two characters of the original data
+	  return b64.length * 3 / 4 - placeHoldersCount(b64)
+	}
+
+	function toByteArray (b64) {
+	  var i, j, l, tmp, placeHolders, arr
+	  var len = b64.length
+	  placeHolders = placeHoldersCount(b64)
+
 	  arr = new Arr(len * 3 / 4 - placeHolders)
 
 	  // if there are placeholders, only get up to the last complete 4 chars
@@ -3859,7 +3921,7 @@ var Session =
 
 
 /***/ },
-/* 13 */
+/* 14 */
 /***/ function(module, exports) {
 
 	exports.read = function (buffer, offset, isLE, mLen, nBytes) {
@@ -3949,7 +4011,7 @@ var Session =
 
 
 /***/ },
-/* 14 */
+/* 15 */
 /***/ function(module, exports) {
 
 	var toString = {}.toString;
@@ -3960,7 +4022,7 @@ var Session =
 
 
 /***/ },
-/* 15 */
+/* 16 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -3977,9 +4039,9 @@ var Session =
 	  root = this;
 	}
 
-	var Emitter = __webpack_require__(16);
-	var requestBase = __webpack_require__(17);
-	var isObject = __webpack_require__(18);
+	var Emitter = __webpack_require__(17);
+	var requestBase = __webpack_require__(18);
+	var isObject = __webpack_require__(19);
 
 	/**
 	 * Noop.
@@ -3991,7 +4053,7 @@ var Session =
 	 * Expose `request`.
 	 */
 
-	var request = module.exports = __webpack_require__(19).bind(null, Request);
+	var request = module.exports = __webpack_require__(20).bind(null, Request);
 
 	/**
 	 * Determine XHR.
@@ -4942,7 +5004,7 @@ var Session =
 
 
 /***/ },
-/* 16 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -5111,13 +5173,13 @@ var Session =
 
 
 /***/ },
-/* 17 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
 	 * Module of mixed-in functions shared between node and client code
 	 */
-	var isObject = __webpack_require__(18);
+	var isObject = __webpack_require__(19);
 
 	/**
 	 * Clear previous timeout.
@@ -5489,7 +5551,7 @@ var Session =
 
 
 /***/ },
-/* 18 */
+/* 19 */
 /***/ function(module, exports) {
 
 	/**
@@ -5508,7 +5570,7 @@ var Session =
 
 
 /***/ },
-/* 19 */
+/* 20 */
 /***/ function(module, exports) {
 
 	// The node and browser modules expose versions of this with the
@@ -5546,12 +5608,12 @@ var Session =
 
 
 /***/ },
-/* 20 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var types = __webpack_require__(21);
-	var atob = __webpack_require__(23);
-	var btoa = __webpack_require__(10);
+	var types = __webpack_require__(22);
+	var atob = __webpack_require__(24);
+	var btoa = __webpack_require__(11);
 
 	function fromTryton(value, index, parent) {
 	  if (value instanceof Array) {
@@ -5593,7 +5655,7 @@ var Session =
 	        value = uint_array;
 	        break;
 	      case 'Decimal':
-	        value = Number(value.decimal);
+	        value = types.decimal(value.decimal);
 	        break;
 	      }
 	      if (parent) {
@@ -5617,7 +5679,7 @@ var Session =
 	  }
 	  else if ((typeof (value) !== 'string') && (typeof (value) !== 'number') && (
 	      value !== null) && (value !== undefined)) {
-	    if (value.isDate) {
+	    if (types.isDate(value)) {
 	      value = {
 	        '__class__': 'date',
 	        'year': value.year(),
@@ -5628,7 +5690,7 @@ var Session =
 	        parent[index] = value;
 	      }
 	    }
-	    else if (value.isDateTime) {
+	    else if (types.isDateTime(value)) {
 	      value = value.clone();
 	      value = {
 	        '__class__': 'datetime',
@@ -5651,7 +5713,7 @@ var Session =
 	        parent[index] = value;
 	      }
 	    }
-	    else if (value.isTime) {
+	    else if (types.isTime(value)) {
 	      value = {
 	        '__class__': 'time',
 	        'hour': value.hour(),
@@ -5663,7 +5725,7 @@ var Session =
 	        parent[index] = value;
 	      }
 	    }
-	    else if (value.isTimeDelta) {
+	    else if (types.isTimeDelta(value)) {
 	      value = {
 	        '__class__': 'timedelta',
 	        'seconds': value.asSeconds()
@@ -5672,7 +5734,7 @@ var Session =
 	        parent[index] = value;
 	      }
 	    }
-	    else if (value instanceof Number) {
+	    else if (types.isDecimal(value)) {
 	      value = {
 	        '__class__': 'Decimal',
 	        'decimal': value.toString()
@@ -5705,88 +5767,171 @@ var Session =
 
 
 /***/ },
-/* 21 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var _ = __webpack_require__(2);
-	var moment = __webpack_require__(22);
+	var moment = __webpack_require__(23);
+	//
 	exports.decimal = function (n) {
 	  return new Number(n);
 	};
+	exports.isDecimal = function (n) {
+	  return n instanceof Number;
+	};
+	//
+	var DATE_FORMAT = 'YYYY-MM-DD';
+	exports.DATE_FORMAT = DATE_FORMAT;
 	exports.date = function (y, M, D) {
 	  // nil values are replaced by current
-	  var values = {
-	    y: y,
-	    M: M,
-	    D: D,
-	    h: 0,
-	    m: 0,
-	    s: 0,
-	    ms: 0
-	  };
-	  values = _.pickBy(values, (v) => !_.isNil(v));
-	  var r = moment();
-	  r.set(values);
+	  var r;
+	  if (_.isString(y)) {
+	    r = moment(y, DATE_FORMAT);
+	    r.startOf('day');
+	  }
+	  else {
+	    var values = {
+	      y: y,
+	      M: M,
+	      D: D,
+	      h: 0,
+	      m: 0,
+	      s: 0,
+	      ms: 0
+	    };
+	    values = _.pickBy(values, (v) => !_.isNil(v));
+	    r = moment();
+	    r.set(values);
+	  }
 	  r.isDate = true;
 	  return r;
 	};
+
+	function isDate(d) {
+	  return moment.isMoment(d) && d.isDate;
+	}
+	exports.isDate = isDate;
+	//
+	var TIME_FORMAT = 'HH:mm:ss.SSS';
+	exports.TIME_FORMAT = TIME_FORMAT;
 	exports.time = function (h, m, s, ms) {
 	  // nil values are replaced by current
-	  var values = {
+	  var empty = {
 	    y: 0,
 	    M: 0,
-	    D: 1,
-	    h: h,
-	    m: m,
-	    s: s,
-	    ms: ms
+	    D: 1
 	  };
-	  var r = moment();
-	  r.set(_.pickBy(values, (v) => !_.isNil(v)));
+	  var r;
+	  if (_.isString(h)) {
+	    r = moment(h, TIME_FORMAT);
+	    r.set(empty);
+	  }
+	  else {
+	    var values = _.assign({
+	      h: h,
+	      m: m,
+	      s: s,
+	      ms: ms
+	    }, empty);
+	    r = moment();
+	    r.set(_.pickBy(values, (v) => !_.isNil(v)));
+	  }
 	  r.isTime = true;
 	  return r;
 	};
+
+	function isTime(t) {
+	  return moment.isMoment(t) && t.isTime;
+	}
+	exports.isTime = isTime;
+	//
+	var DATETIME_FORMAT = 'YYYY-MM-DD HH:mm:ss.SSS';
+	exports.DATETIME_FORMAT = DATETIME_FORMAT;
 	exports.datetime = function (y, M, D, h, m, s, ms, utc) {
 	  // nil values are replaced by current
-	  var values = {
-	    y: y,
-	    M: M,
-	    D: D,
-	    h: h,
-	    m: m,
-	    s: s,
-	    ms: ms
-	  };
-	  var cls = utc && moment.utc || moment;
-	  var r = cls();
-	  r.set(_.pickBy(values, (v) => !_.isNil(v)));
+	  var cls = utc ? moment.utc : moment;
+	  var r;
+	  if (_.isString(y)) {
+	    r = moment(y, DATETIME_FORMAT);
+	  }
+	  else {
+	    var values = {
+	      y: y,
+	      M: M,
+	      D: D,
+	      h: h,
+	      m: m,
+	      s: s,
+	      ms: ms
+	    };
+	    r = cls();
+	    r.set(_.pickBy(values, (v) => !_.isNil(v)));
+	  }
 	  r.isDateTime = true;
 	  return r.local();
 	};
+
+	function isDateTime(dt) {
+	  return moment.isMoment(dt) && dt.isDateTime;
+	}
+	exports.isDateTime = isDateTime;
+	//
 	exports.timedelta = function (y, M, d, h, m, s, ms) {
-	  var values = {
-	    y: y,
-	    M: M,
-	    d: d,
-	    h: h,
-	    m: m,
-	    s: s,
-	    ms: ms
-	  };
-	  var r = moment.duration(_.pickBy(values, (v) => !_.isNil(v)));
+	  var r;
+	  if (_.isString(y)) {
+	    r = moment.duration(y);
+	  }
+	  else {
+	    var values = {
+	      y: y,
+	      M: M,
+	      d: d,
+	      h: h,
+	      m: m,
+	      s: s,
+	      ms: ms
+	    };
+	    r = moment.duration(_.pickBy(values, (v) => !_.isNil(v)));
+	  }
 	  r.isTimeDelta = true;
 	  return r;
 	};
 
+	function isTimeDelta(td) {
+	  return moment.isDuration(td) && td.isTimeDelta;
+	}
+	exports.isTimeDelta = isTimeDelta;
+	//
+	exports.stringify = function (data) {
+	  if (_.isNil(data) || _.isString(data)) {
+	    return data;
+	  }
+	  else if (isDate(data)) {
+	    return data.format(DATE_FORMAT);
+	  }
+	  else if (isTime(data)) {
+	    return data.format(TIME_FORMAT);
+	  }
+	  else if (isDateTime(data)) {
+	    return data.format(DATETIME_FORMAT);
+	  }
+	  else if (isTimeDelta(data)) {
+	    return data.toJSON();
+	  }
+	  else {
+	    throw new Error('unsupported data type');
+	  }
+	};
+
 
 /***/ },
-/* 22 */
+/* 23 */
 /***/ function(module, exports) {
 
 	module.exports = moment;
 
 /***/ },
-/* 23 */
+/* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(Buffer) {(function (w) {
@@ -5826,20 +5971,20 @@ var Session =
 	  }
 	}(window));
 
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(11).Buffer))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(12).Buffer))
 
 /***/ },
-/* 24 */
+/* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
-	
+	/* WEBPACK VAR INJECTION */(function(process) {
 	/**
 	 * This is the web browser implementation of `debug()`.
 	 *
 	 * Expose `debug()` as the module.
 	 */
 
-	exports = module.exports = __webpack_require__(25);
+	exports = module.exports = __webpack_require__(26);
 	exports.log = log;
 	exports.formatArgs = formatArgs;
 	exports.save = save;
@@ -5873,7 +6018,8 @@ var Session =
 
 	function useColors() {
 	  // is webkit? http://stackoverflow.com/a/16459606/376773
-	  return ('WebkitAppearance' in document.documentElement.style) ||
+	  // document is undefined in react-native: https://github.com/facebook/react-native/pull/1632
+	  return (typeof document !== 'undefined' && 'WebkitAppearance' in document.documentElement.style) ||
 	    // is firebug? http://stackoverflow.com/a/398120/376773
 	    (window.console && (console.firebug || (console.exception && console.table))) ||
 	    // is firefox >= v31?
@@ -5886,7 +6032,11 @@ var Session =
 	 */
 
 	exports.formatters.j = function(v) {
-	  return JSON.stringify(v);
+	  try {
+	    return JSON.stringify(v);
+	  } catch (err) {
+	    return '[UnexpectedJSONParseError]: ' + err.message;
+	  }
 	};
 
 
@@ -5973,9 +6123,13 @@ var Session =
 	function load() {
 	  var r;
 	  try {
-	    r = exports.storage.debug;
+	    return exports.storage.debug;
 	  } catch(e) {}
-	  return r;
+
+	  // If debug isn't set in LS, and we're in Electron, try to load $DEBUG
+	  if (typeof process !== 'undefined' && 'env' in process) {
+	    return process.env.DEBUG;
+	  }
 	}
 
 	/**
@@ -6001,9 +6155,10 @@ var Session =
 	  } catch (e) {}
 	}
 
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8)))
 
 /***/ },
-/* 25 */
+/* 26 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -6014,12 +6169,12 @@ var Session =
 	 * Expose `debug()` as the module.
 	 */
 
-	exports = module.exports = debug;
+	exports = module.exports = debug.debug = debug;
 	exports.coerce = coerce;
 	exports.disable = disable;
 	exports.enable = enable;
 	exports.enabled = enabled;
-	exports.humanize = __webpack_require__(26);
+	exports.humanize = __webpack_require__(27);
 
 	/**
 	 * The currently active debug mode names, and names to skip.
@@ -6091,7 +6246,10 @@ var Session =
 	    if (null == self.useColors) self.useColors = exports.useColors();
 	    if (null == self.color && self.useColors) self.color = selectColor();
 
-	    var args = Array.prototype.slice.call(arguments);
+	    var args = new Array(arguments.length);
+	    for (var i = 0; i < args.length; i++) {
+	      args[i] = arguments[i];
+	    }
 
 	    args[0] = exports.coerce(args[0]);
 
@@ -6118,9 +6276,9 @@ var Session =
 	      return match;
 	    });
 
-	    if ('function' === typeof exports.formatArgs) {
-	      args = exports.formatArgs.apply(self, args);
-	    }
+	    // apply env-specific formatting
+	    args = exports.formatArgs.apply(self, args);
+
 	    var logFn = enabled.log || exports.log || console.log.bind(console);
 	    logFn.apply(self, args);
 	  }
@@ -6149,7 +6307,7 @@ var Session =
 
 	  for (var i = 0; i < len; i++) {
 	    if (!split[i]) continue; // ignore empty strings
-	    namespaces = split[i].replace(/\*/g, '.*?');
+	    namespaces = split[i].replace(/[\\^$+?.()|[\]{}]/g, '\\$&').replace(/\*/g, '.*?');
 	    if (namespaces[0] === '-') {
 	      exports.skips.push(new RegExp('^' + namespaces.substr(1) + '$'));
 	    } else {
@@ -6206,18 +6364,18 @@ var Session =
 
 
 /***/ },
-/* 26 */
+/* 27 */
 /***/ function(module, exports) {
 
 	/**
 	 * Helpers.
 	 */
 
-	var s = 1000;
-	var m = s * 60;
-	var h = m * 60;
-	var d = h * 24;
-	var y = d * 365.25;
+	var s = 1000
+	var m = s * 60
+	var h = m * 60
+	var d = h * 24
+	var y = d * 365.25
 
 	/**
 	 * Parse or format the given `val`.
@@ -6228,17 +6386,23 @@ var Session =
 	 *
 	 * @param {String|Number} val
 	 * @param {Object} options
+	 * @throws {Error} throw an error if val is not a non-empty string or a number
 	 * @return {String|Number}
 	 * @api public
 	 */
 
-	module.exports = function(val, options){
-	  options = options || {};
-	  if ('string' == typeof val) return parse(val);
-	  return options.long
-	    ? long(val)
-	    : short(val);
-	};
+	module.exports = function (val, options) {
+	  options = options || {}
+	  var type = typeof val
+	  if (type === 'string' && val.length > 0) {
+	    return parse(val)
+	  } else if (type === 'number' && isNaN(val) === false) {
+	    return options.long ?
+				fmtLong(val) :
+				fmtShort(val)
+	  }
+	  throw new Error('val is not a non-empty string or a valid number. val=' + JSON.stringify(val))
+	}
 
 	/**
 	 * Parse the given `str` and return milliseconds.
@@ -6249,47 +6413,53 @@ var Session =
 	 */
 
 	function parse(str) {
-	  str = '' + str;
-	  if (str.length > 10000) return;
-	  var match = /^((?:\d+)?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|years?|yrs?|y)?$/i.exec(str);
-	  if (!match) return;
-	  var n = parseFloat(match[1]);
-	  var type = (match[2] || 'ms').toLowerCase();
+	  str = String(str)
+	  if (str.length > 10000) {
+	    return
+	  }
+	  var match = /^((?:\d+)?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|years?|yrs?|y)?$/i.exec(str)
+	  if (!match) {
+	    return
+	  }
+	  var n = parseFloat(match[1])
+	  var type = (match[2] || 'ms').toLowerCase()
 	  switch (type) {
 	    case 'years':
 	    case 'year':
 	    case 'yrs':
 	    case 'yr':
 	    case 'y':
-	      return n * y;
+	      return n * y
 	    case 'days':
 	    case 'day':
 	    case 'd':
-	      return n * d;
+	      return n * d
 	    case 'hours':
 	    case 'hour':
 	    case 'hrs':
 	    case 'hr':
 	    case 'h':
-	      return n * h;
+	      return n * h
 	    case 'minutes':
 	    case 'minute':
 	    case 'mins':
 	    case 'min':
 	    case 'm':
-	      return n * m;
+	      return n * m
 	    case 'seconds':
 	    case 'second':
 	    case 'secs':
 	    case 'sec':
 	    case 's':
-	      return n * s;
+	      return n * s
 	    case 'milliseconds':
 	    case 'millisecond':
 	    case 'msecs':
 	    case 'msec':
 	    case 'ms':
-	      return n;
+	      return n
+	    default:
+	      return undefined
 	  }
 	}
 
@@ -6301,12 +6471,20 @@ var Session =
 	 * @api private
 	 */
 
-	function short(ms) {
-	  if (ms >= d) return Math.round(ms / d) + 'd';
-	  if (ms >= h) return Math.round(ms / h) + 'h';
-	  if (ms >= m) return Math.round(ms / m) + 'm';
-	  if (ms >= s) return Math.round(ms / s) + 's';
-	  return ms + 'ms';
+	function fmtShort(ms) {
+	  if (ms >= d) {
+	    return Math.round(ms / d) + 'd'
+	  }
+	  if (ms >= h) {
+	    return Math.round(ms / h) + 'h'
+	  }
+	  if (ms >= m) {
+	    return Math.round(ms / m) + 'm'
+	  }
+	  if (ms >= s) {
+	    return Math.round(ms / s) + 's'
+	  }
+	  return ms + 'ms'
 	}
 
 	/**
@@ -6317,12 +6495,12 @@ var Session =
 	 * @api private
 	 */
 
-	function long(ms) {
-	  return plural(ms, d, 'day')
-	    || plural(ms, h, 'hour')
-	    || plural(ms, m, 'minute')
-	    || plural(ms, s, 'second')
-	    || ms + ' ms';
+	function fmtLong(ms) {
+	  return plural(ms, d, 'day') ||
+	    plural(ms, h, 'hour') ||
+	    plural(ms, m, 'minute') ||
+	    plural(ms, s, 'second') ||
+	    ms + ' ms'
 	}
 
 	/**
@@ -6330,14 +6508,18 @@ var Session =
 	 */
 
 	function plural(ms, n, name) {
-	  if (ms < n) return;
-	  if (ms < n * 1.5) return Math.floor(ms / n) + ' ' + name;
-	  return Math.ceil(ms / n) + ' ' + name + 's';
+	  if (ms < n) {
+	    return
+	  }
+	  if (ms < n * 1.5) {
+	    return Math.floor(ms / n) + ' ' + name
+	  }
+	  return Math.ceil(ms / n) + ' ' + name + 's'
 	}
 
 
 /***/ },
-/* 27 */
+/* 28 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -6351,11 +6533,11 @@ var Session =
 
 
 /***/ },
-/* 28 */
+/* 29 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var Session = __webpack_require__(1);
-	var methods = __webpack_require__(27);
+	var methods = __webpack_require__(28);
 	var rpc = __webpack_require__(5);
 
 	function loadContext() {
@@ -6364,7 +6546,7 @@ var Session =
 	      this.context = result;
 	    });
 	}
-	Session.afterLogin.push(loadContext);
+	Session.afterStart.push(loadContext);
 
 
 /***/ }
