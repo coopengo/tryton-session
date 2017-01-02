@@ -24,7 +24,7 @@
     "inherits": "^2.0.3",
     "lodash": "^4.16.6",
     "superagent": "^2.1.0",
-    "tryton-types": "~4.0.0"
+    "tryton-types": "~4.2.0"
   },
   "devDependencies": {
     "co": "^4.6.0",
