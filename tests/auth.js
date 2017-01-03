@@ -8,7 +8,7 @@ var session = new Session(data.server, data.database);
 var cache;
 
 function start() {
-  return session.start(data.username, data.password);
+  return session.start(data.username, data.parameters);
 }
 
 function check() {

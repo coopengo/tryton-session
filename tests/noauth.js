@@ -9,19 +9,7 @@ var session = new Session(data.server, data.database);
 function version() {
   return co(function* () {
     var version = yield session.version();
-    t.match(version, /^4\.0\.\d/);
-  });
-}
-
-function langs() {
-  return co(function* () {
-    var ls = yield session.listLang();
-    t.ok(_.isArray(ls));
-    _.each(ls, (l) => {
-      t.ok(_.isArray(l));
-      t.isa(l[0], 'string');
-      t.isa(l[1], 'string');
-    });
+    t.match(version, /^4\.2\.\d/);
   });
 }
 
@@ -34,6 +22,6 @@ function dbs() {
     });
   });
 }
-var tests = [version, langs, dbs];
+var tests = [version, dbs];
 Promise.all(_.map(tests, t.test))
   .catch(t.threw);

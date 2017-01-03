@@ -1,4 +1,6 @@
-exports.server = 'http://localhost:7999';
+exports.server = 'http://localhost:8000';
 exports.database = 'tryton';
 exports.username = 'admin';
-exports.password = 'admin';
+exports.parameters = {
+  password: 'admin'
+};
