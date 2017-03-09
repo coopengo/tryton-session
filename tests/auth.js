@@ -57,9 +57,11 @@ function crash() {
       yield session.rpc('model.tata.juliette', []);
     }
     catch (err) {
-      t.ok(_.isPlainObject(err));
-      t.isa(err.error, 'string');
-      t.isa(err.stack, 'string');
+      t.ok(err instanceof Error);
+      t.ok(Session.isRPCError(err));
+      t.isa(err.status, 'number');
+      t.isa(err.message, 'string');
+      t.isa(err.tb, 'string');
       return;
     }
     t.fail('error not raised');
