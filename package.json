@@ -1,7 +1,7 @@
 {
   "name": "tryton-session",
   "description": "Tryton Session",
-  "version": "4.2.9",
+  "version": "4.2.10",
   "license": "GPL-3.0+",
   "author": "Coopengo <support@coopengo.com>",
   "repository": {
@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "assert": "^1",
+    "btoa": "^1",
     "debug": "^2",
     "events": "^1",
     "inherits": "^2",
@@ -25,7 +26,6 @@
   },
   "devDependencies": {
     "co": "^4",
-    "lodash": "^4",
     "tap": "^8"
   }
 }
