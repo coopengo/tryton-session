@@ -1,7 +1,7 @@
 {
   "name": "tryton-session",
   "description": "Tryton Session",
-  "version": "4.2.10",
+  "version": "4.2.11",
   "license": "GPL-3.0+",
   "author": "Coopengo <support@coopengo.com>",
   "repository": {
@@ -10,9 +10,7 @@
   },
   "main": "lib/index.js",
   "scripts": {
-    "beautify": "js-beautify --config .jsbeautifyrc -r *.js lib/*.js tests/*.js tests/.*.js",
-    "lint": "jshint -c .jshintrc *.js lib/*.js tests/*.js tests/.*.js",
-    "test": "tap tests/*"
+    "test": "standard && tap tests/*"
   },
   "dependencies": {
     "assert": "^1",
@@ -26,6 +24,7 @@
   },
   "devDependencies": {
     "co": "^4",
+    "standard": "latest",
     "tap": "^8"
   }
 }

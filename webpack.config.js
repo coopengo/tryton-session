@@ -10,4 +10,4 @@ module.exports = {
     libraryTarget: 'var',
     library: 'Session'
   }
-};
+}
