@@ -9,7 +9,7 @@ var session = new Session(data.server, data.database)
 function version () {
   return co(function * () {
     var version = yield session.version()
-    t.match(version, /^4\.2\.\d/)
+    t.match(version, /^4\.4\.\d/)
   })
 }
 
