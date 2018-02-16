@@ -5,7 +5,7 @@ var data = require('./.data')
 var session = new Session(data.server, data.database)
 
 function start () {
-  return session.start(data.username, data.parameters)
+  return session.start(data.username, {password: data.password})
 }
 
 function check () {
@@ -13,16 +13,17 @@ function check () {
 }
 
 function breakToken () {
-  session.token = '123'
+  session.session = '123'
 }
 
 function stop () {
   return new Promise((resolve, reject) => {
     session.stop()
       .then(
-        () => reject(new Error('dummy token accepted')),
-        (err) => err.status === 403 ? resolve() : reject(new Error('bad error code'))
-        )
+        () => reject(new Error('dummy session accepted')),
+        (err) => {
+          t.assert(Session.isRPCForbidden(err), 'bad error type')
+        })
   })
 }
 

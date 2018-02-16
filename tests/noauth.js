@@ -1,27 +1,27 @@
 var t = require('tap')
 var _ = require('lodash')
-var co = require('co')
 var Session = require('..')
 var data = require('./.data')
 
+var VERSION = require('../package.json').version.split('.')
+
 var session = new Session(data.server, data.database)
 
-function version () {
-  return co(function * () {
-    var version = yield session.version()
-    t.match(version, /^4\.4\.\d/)
+const version = async () => {
+  var version = await session.version()
+  version = version.split('.')
+  t.equal(version[0], VERSION[0])
+  t.equal(version[1], VERSION[1])
+}
+
+const dbs = async () => {
+  var ds = await session.listDB()
+  t.ok(_.isArray(ds))
+  _.each(ds, (d) => {
+    t.isa(d, 'string')
   })
 }
 
-function dbs () {
-  return co(function * () {
-    var ds = yield session.listDB()
-    t.ok(_.isArray(ds))
-    _.each(ds, (d) => {
-      t.isa(d, 'string')
-    })
-  })
-}
-
-Promise.all(_.map([version, dbs], t.test))
-  .catch(t.threw)
+t.test(version)
+  .then(dbs)
+  .then(t.end, t.threw)
