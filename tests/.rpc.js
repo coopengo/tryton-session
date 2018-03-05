@@ -5,6 +5,10 @@ var Session = require('..')
 module.exports = (session) => {
   let cache
   return {
+    id: async () => {
+      var v = session.identity()
+      t.match(v, new RegExp('.*' + (session.token || session.user) + '.*'))
+    },
     check: async () => {
       await session.check()
     },

@@ -14,6 +14,7 @@ const stop = async () => {
 }
 
 t.test(start)
+  .then(rpc.id)
   .then(rpc.check)
   .then(rpc.pack)
   .then(rpc.unpack)
