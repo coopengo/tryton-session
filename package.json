@@ -20,7 +20,7 @@
     "inherits": "^2",
     "lodash": "^4",
     "superagent": "^2",
-    "tryton-types": "~4.6"
+    "tryton-types": "~4.8.0"
   },
   "devDependencies": {
     "standard": "latest",
