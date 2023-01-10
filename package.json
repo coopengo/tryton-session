@@ -15,11 +15,11 @@
   "dependencies": {
     "assert": "^1",
     "btoa": "^1",
-    "debug": "^2",
+    "debug": "^3.1.0",
     "events": "^1",
     "inherits": "^2",
     "lodash": "^4",
-    "superagent": "^2",
+    "superagent": "^3.6.1",
     "tryton-types": "~4.6"
   },
   "devDependencies": {
